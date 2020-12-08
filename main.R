@@ -168,36 +168,79 @@ summary(result.lm)
 #---------------------------------------------------------------------------------
 
 library(car)
-setwd("C:\\Users\\hyngsk\\PycharmProjects\\Rproject")
+setwd("C:\\Users\\HOME\\PycharmProjects\\R_Assignments")
 
-data <- read.csv("electric.csv", header = T, encoding = "UTF-8")
+data <- read.csv("e.model.csv", header = T, encoding = "UTF-8")
 data
-names(data) <- c("year", "region", "total", "house", "public", "service", "industry",
-                 "numOfHome", "area", "buildingArea", "numOfHos", "numOfBeds", "bedsperhos")
+names(data) <- c("region", "e", "pop", "house","popM", "DistGFA", "OfficeGFA", "BuildingGFA", "area", "TotalHos",
+                 "TotalNOB", "No.GHos", "NOB.GHos", "No.Hos", "NOB.Hos", "No.Clinic", "NOB.Clinic",
+                 "No.Apart", "No.Detch", "No.M.Fam", "No.Row", "water"
+)
 data
-total <- data$total
 
+e <- data$e/data$area
+
+pop <- data$pop
 house <- data$house
-public <- data$public
-service <- data$service
-industry <- data$industry
-
-numOfHome <- data$numOfHome
+popM <- data$popM
+DistGFA <- data$DistGFA/data$BuildingGFA
+OfficeGFA <- data$OfficeGFA/data$BuildingGFA
+BuildingGFA <- data$BuildingGFA
 area <- data$area
-buildingArea <- data$buildingArea
-numOfHos <- data$numOfHos
-numOfBeds <- data$numOfBeds
 
-bedsPerHos <- data$bedsperhos
-df <- data.frame(total, buildingArea, numOfBeds, numOfHome)
+TotalHos <- data$TotalHos
+TotalNOB <- data$TotalNOB
+
+No.GHos <- data$No.GHos
+NOB.GHos <- data$NOB.GHos
+No.Hos <- data$No.Hos
+NOB.Hos <- data$NOB.Hos
+No.Clinic <- data$No.Clinic
+NOB.Clinic <- data$NOB.Clinic
+
+No.Apart <- data$No.Apart
+No.Detch <- data$No.Detch
+No.M.Fam <- data$No.M.Fam
+No.Row <- data$No.Row
+water <- data$water
+
+summary(data)
+
+# df <- data.frame(total, buildingArea, numOfBeds, numOfHome)
+df <- data.frame(e, pop,house, popM, DistGFA, OfficeGFA, BuildingGFA, area, TotalHos,
+                 TotalNOB, No.GHos, NOB.GHos, No.Hos, NOB.Hos, No.Clinic, NOB.Clinic,
+                 No.Apart, No.Detch, No.M.Fam, No.Row, water)
+df
 pairs(df)
 
-result.lm <- lm(total ~ buildingArea + numOfBeds + numOfHome, data = df)
+result.lm <- lm(e ~ #pop +
+  house +
+    #popM +
+  DistGFA +
+  OfficeGFA
+  #BuildingGFA +
+  #area +
+#  TotalHos +
+#  TotalNOB
+  #NO.GHos +
+  #NOB.GHos +
+  #NO.Hos +
+  #NOB.Hos +
+  #NO.Clinic +
+  #NOB.Clinic +
+#  No.Apart
+#  +No.Detch
+#  +No.M.Fam +
+#  No.Row
+#  water
+  , data = df
+)
 vif(result.lm)
 residuals(result.lm)[1:4]
 fitted.values(result.lm)[1:4]
 summary(result.lm)
 #names(result.lm)
+plot(result.lm, 1)
 
 result.lm
 cor(df)
