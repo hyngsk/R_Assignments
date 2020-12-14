@@ -5,89 +5,112 @@
 # e-mail : hyngsk.o@gmail.com
 # class : Finance Analytics (prof.TaeYeon. Kwon)
 library(car)
-#setwd("C:\\Users\\hyngsk\\PycharmProjects\\Rproject")
-setwd("C:\\Users\\HOME\\PycharmProjects\\R_Assignments")
+require(outliers)
+library("ggplot2")
 
+setwd("C:\\Users\\HOME\\PycharmProjects\\R_Assignments")
 data <- read.csv("e.model2.csv", header = T, encoding = "UTF-8")
+# 결측치 제거 2,520 x 12 -> 1,752 x 12
 data <- na.omit(data)
-data
-# 전력소비량/주택면적
+names(data) <- c("id", "Econs", "area", "dKindOf", "dcompYear", "ExtWall", "floor", "room", "ddoUcheck", "NOF", "dEOM", "discity")
+dim(data)
+head(data)
+summary(data)
+
+# ------데이터 정의-------#
+# 전력소비량
+# 주택면적
 # (더미)주택종류
 # (더미)준공연도
-# 외벽수
 # 거주층수
 # 방수
 # (더미)전월년 동월 전기요금 확인
 # 가구원수
 # (더미)월평균소득
 
-names(data) <- c("id", "Econs", "area", "dKindOf", "dcompYear", "ExtWall", "floor", "room", "ddoUcheck", "NOF", "dEOM")
-data
+# 1) 종속변수----------------------------------------
+e <- data$Econs
 
-
-e <- data$Econs #/ data$area
-
-ExtWall <- data$ExtWall
+# 2) 독립변수----------------------------------------
+# 독립변수.주택형태
+area <- data$area
 floor <- data$floor
 room <- data$room
-NOF <- data$NOF # number of family
-
 d.KindOf <- data$dKindOf
 d.compYear <- data$dcompYear
+# 독립변수.가정형태
+NOF <- data$NOF # number of family
 d.doUcheck <- data$ddoUcheck
 d.EOM <- data$dEOM
-# default is "apartment"
-det <- ifelse(data$dKindOf == 1, 1, 0) # 단독주택 더미
-row <- ifelse(data$dKindOf == 2, 1, 0) # 연립/다세대 주택 더미
 
-# default is "2010 ~"
-cYear1 <- ifelse(data$dcompYear == 1, 1, 0) # ~ 1970
-cYear2 <- ifelse(data$dcompYear == 2, 1, 0) # 1971 ~ 1979
-cYear3 <- ifelse(data$dcompYear == 3, 1, 0) # 1980 ~ 1989
-cYear4 <- ifelse(data$dcompYear == 4, 1, 0) # 1990 ~ 1999
-cYear5 <- ifelse(data$dcompYear == 5, 1, 0) # 2000 ~ 2009
+# 3) Data Frame 확인----------------------------------------
+df <- data.frame(e, floor, area, room, d.compYear, NOF, d.doUcheck, d.EOM)
+pairs(df)
+# 로그 변환
+df <- data.frame(log(e), floor, area, room, d.compYear, NOF, d.doUcheck, d.EOM)
+pairs(df)
 
-# default is "always"
-doUcheck1 <- ifelse(data$ddoUcheck == 2, 1, 0) # sometime
-doUcheck2 <- ifelse(data$ddoUcheck == 3, 1, 0) # rarely
-doUcheck3 <- ifelse(data$ddoUcheck == 4, 1, 0) # never
 
-#default is " ? ~ 200" // Earning Of a Month
-EOM1 <- ifelse(data$dEOM == 2, 1, 0) # 200 ~ 400
-EOM2 <- ifelse(data$dEOM == 3, 1, 0) # 400 ~ 600
-EOM3 <- ifelse(data$dEOM == 4, 1, 0) # 600 ~ ?
-
-# df <- data.frame(total, buildingArea, numOfBeds, numOfHome)
-df <- data.frame(e, ExtWall, floor, room, NOF, det, row,d.KindOf, d.compYear, d.doUcheck, d.EOM, cYear1, cYear2, cYear3, cYear4, cYear5, doUcheck1, doUcheck2, doUcheck3, EOM1, EOM2, EOM3)
-df
-#pairs(df)
-
-result.lm <- lm(log(e) ~ ExtWall +
-  floor +
+# 4) Modeling first model ----------------------------------------
+m <- lm(log(e) ~ floor +
   room +
+  area +
+  as.factor(d.KindOf) +
+  as.factor(d.compYear) +
   NOF +
-  as.factor(d.compYear)+
-  as.factor(d.EOM)+
-  as.factor(d.KindOf)+
-  as.factor(d.doUcheck)
-  , data = df
-)
+  as.factor(d.doUcheck) +
+  as.factor(d.EOM)
+  , data = df)
+m
+summary(m)
+# 5) check Multicollinearity----------------------------------------
+vif(m)
+#                          GVIF Df GVIF^(1/(2*Df))
+#floor                 1.667735  1        1.291408
+#room                  1.821171  1        1.349508
+#area                  1.975273  1        1.405444
+#as.factor(d.KindOf)   1.916495  2        1.176595
+#as.factor(d.compYear) 1.426391  5        1.036153
+#NOF                   1.380839  1        1.175091
+#as.factor(d.doUcheck) 1.047466  3        1.007759
+#as.factor(d.EOM)      1.533162  3        1.073820
 
-vif(result.lm)
-residuals(result.lm)[1:4]
-fitted.values(result.lm)[1:4]
-summary(result.lm)
-#names(result.lm)
+# 6) Stepwise selection----------------------------------------
+m <- step(m, scope = list(lower = ~1, upper = ~floor +
+  room +
+  area +
+  as.factor(d.KindOf) +
+  as.factor(d.compYear) +
+  NOF +
+  as.factor(d.doUcheck) +
+  as.factor(d.EOM)), direction = "both")
 
-plot(result.lm, 2)
-hist(result.lm$residuals)
+# 7) Final model----------------------------------------
+summary(m)
+vif(m)
+#                        GVIF Df GVIF^(1/(2*Df))
+#floor               1.603613  1        1.266338
+#room                1.798559  1        1.341104
+#area                1.842632  1        1.357436
+#as.factor(d.KindOf) 1.650481  2        1.133451
+#NOF                 1.119173  1        1.057910
 
-result.lm
-cor(df)
-summary(result.lm)
+# 잔차의 독립성 (Independency of Standard Residuals)----------------------------------------
+m.residuals <- residuals(m)
+durbinWatsonTest(m.residuals)
 
-confint(result.lm)
-sm <- step(result.lm)
-summary(sm)
-plot(sm,5)
-hist(sm$residuals)
+# 잔차의 등분산성 (Homogeneity of Variance Test)----------------------------------------
+plot(rstandard(m))
+par(mfrow = c(1,2))
+plot(m,1)
+plot(m,2)
+
+# 잔차의 정규성 (Normality of Standard Residuals)----------------------------------------
+par(mfrow = c(1,1))
+hist(m.residuals)
+shapiro.test(m.residuals)
+# 	Shapiro-Wilk normality test
+#
+# data:  m.residuals
+# W = 0.85937, p-value < 2.2e-16
+# 정규성 검정의 귀무가설을 채택 -> 정규분포와 차이가 없다.
