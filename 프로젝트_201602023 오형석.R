@@ -5,8 +5,6 @@
 # e-mail : hyngsk.o@gmail.com
 # class : Finance Analytics (prof.TaeYeon. Kwon)
 library(car)
-require(outliers)
-library("ggplot2")
 
 setwd("C:\\Users\\HOME\\PycharmProjects\\R_Assignments")
 data <- read.csv("e.model2.csv", header = T, encoding = "UTF-8")
