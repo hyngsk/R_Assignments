@@ -1,7 +1,7 @@
-# Title     : 인천광역시 주택 특성별 전력수요량 모델
+# Title     : 주택과 구성원의 형태에 따른 가정 전력소비량의 영향요인 분석
 # Objective : TODO
 # Created by: hyngsk
-# Created on: 2020-12-08
+# Created on: 2020-12-17
 # e-mail : hyngsk.o@gmail.com
 # class : Finance Analytics (prof.TaeYeon. Kwon)
 library(car)
